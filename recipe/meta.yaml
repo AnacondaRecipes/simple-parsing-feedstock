@@ -13,14 +13,15 @@ source:
 build:
   number: 0
   script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
-  skip: True  #[py<39]
+  skip: True  #[py<38]
 
 requirements:
   host:
     - pip
+    - python
+    # Required for pip to import the PEP 517 backend during metadata preparation
     - poetry-core >=1.0.0
     - poetry-dynamic-versioning >=1.0.0,<2.0.0
-    - python
   run:
     - docstring_parser >=0.15,<1.dev0
     - python
