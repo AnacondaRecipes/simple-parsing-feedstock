@@ -1,44 +1,75 @@
 {% set name = "simple-parsing" %}
-{% set version = "0.1.7" %}
-
+{% set version = "0.1.9" %}
 
 package:
-  name: {{ name|lower }}
+  name: {{ name }}
   version: {{ version }}
 
 source:
-  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/simple_parsing-{{ version }}.tar.gz
-  sha256: 225e6b35252d68f7894716101fe3bd7e6dd3d30ab7b1c3c023f77a42dbe1336f
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  sha256: 0ff184ebaa6606420989ddbcb5650b21c62e2a59ec5388bc76c3343bda872cde
 
 build:
   number: 0
   script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
-  skip: True  #[py<38]
+  skip: true  # [py<39]
 
 requirements:
   host:
     - pip
     - python
     # Required for pip to import the PEP 517 backend during metadata preparation
-    - poetry-core >=1.0.0
     - poetry-dynamic-versioning >=1.0.0,<2.0.0
+    - hatchling
+    - uv-dynamic-versioning
   run:
     - docstring_parser >=0.15,<1.dev0
     - python
     - typing_extensions >=4.5.0
   run_constrained:
-    - pyyaml >=6.0.1,<7.0.0
-    - tomli >=2.0.1,<3.0.0
-    - tomli-w >=1.0.0,<2.0.0
+    # yaml
+    - pyyaml >=6.0.2
+    # toml
+    - tomli >=2.2.1
+    - tomli-w >=1.0.0
+
+# Lot of assertion errors in conda environment
+# E       AssertionError: 
+{% set deselected_tests = " --deselect=test/test_bools.py::test_bool_args_in_help" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_conf_path.py::test_pass_invalid_value_to_add_config_path_arg" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_docstrings.py::test_weird_docstring_with_field_like" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_docstrings.py::test_docstring_builds_upon_bases" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_docstrings.py::test_desc_from_cls_docstring" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_docstrings.py::test_help_takes_value_from_docstring" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_examples.py::test_running_example_outputs_expected_without_arg" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_issue_48.py::test_issue_48" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_subgroups.py::test_help_string" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_subgroups.py::test_help_string_displays_default_factory_arguments" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_subgroups.py::test_subgroup_partial_with_nested_field" %}
+
+# [Errno 2] No such file or directory:
+{% set deselected_tests = deselected_tests + " --deselect=test/nesting/test_nesting_defaults.py::test_comment_pull115" %}  # [win]
+# E       AssertionError: 
+{% set deselected_tests = deselected_tests + " --deselect=test/test_issue_46.py::test_issue_46" %}  # [win]
+{% set deselected_tests = deselected_tests + " --deselect=test/test_issue_46.py::test_issue_46_solution2" %}  # [win]
+{% set deselected_tests = deselected_tests + " --deselect=test/test_tuples.py::test_each_type_is_used_correctly" %}  # [win]
 
 test:
+  source_files:
+    - test
+    - examples
   imports:
     - simple_parsing
   commands:
     - pip check
+    - pytest -vv test {{ deselected_tests }}
   requires:
     - pip
-    - python
+    - pytest
+    - pytest-regressions
+    - pytest-benchmark
+    - matplotlib
+    - numpy
 
 about:
   home: https://github.com/lebrice/SimpleParsing
