@@ -2,11 +2,11 @@
 {% set version = "0.1.9" %}
 
 package:
-  name: {{ name|lower }}
+  name: {{ name }}
   version: {{ version }}
 
 source:
-  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/simple_parsing-{{ version }}.tar.gz
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   sha256: 0ff184ebaa6606420989ddbcb5650b21c62e2a59ec5388bc76c3343bda872cde
 
 build:
@@ -27,18 +27,41 @@ requirements:
     - python
     - typing_extensions >=4.5.0
   run_constrained:
+    # yaml
     - pyyaml >=6.0.2
+    # toml
     - tomli >=2.2.1
     - tomli-w >=1.0.0
 
+# Lot of assertion errors in conda environment
+{% set deselected_tests = " --deselect=test/test_bools.py::test_bool_args_in_help" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_conf_path.py::test_pass_invalid_value_to_add_config_path_arg" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_docstrings.py::test_weird_docstring_with_field_like" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_docstrings.py::test_docstring_builds_upon_bases" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_docstrings.py::test_desc_from_cls_docstring" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_docstrings.py::test_help_takes_value_from_docstring" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_examples.py::test_running_example_outputs_expected_without_arg" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_issue_48.py::test_issue_48" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_subgroups.py::test_help_string" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_subgroups.py::test_help_string_displays_default_factory_arguments" %}
+{% set deselected_tests = deselected_tests + " --deselect=test/test_subgroups.py::test_subgroup_partial_with_nested_field" %}
+
 test:
+  source_files:
+    - test
+    - examples
   imports:
     - simple_parsing
   commands:
     - pip check
+    - pytest -vv test {{ deselected_tests }}
   requires:
     - pip
-    - python
+    - pytest
+    - pytest-regressions
+    - pytest-benchmark
+    - matplotlib
+    - numpy
 
 about:
   home: https://github.com/lebrice/SimpleParsing
